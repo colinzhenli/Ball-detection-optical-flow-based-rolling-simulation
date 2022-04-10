@@ -8,8 +8,14 @@ from matplotlib import pyplot as plt
 
 # the higher the threshold is, the more matched keypoints in frame, the range is (0,1)
 MATCH_THRESHOLD = 0.93
-# the higher the threshold is, there must be more keypoints within the circle, the range is (0,1)
+# the lower the threshold is, there must be more keypoints within the circle, the range is (0,1)
 WITHIN_CIRCLE_THRESHOLD = 0.45
+# The tolerant of the standard division
+stdTolerant = 80
+# Previous center position of the best matching cycle
+old_pos = []
+
+frame_num = 0
 ap = argparse.ArgumentParser()
 ap.add_argument("-v", "--video", help="path to the (optional) video file")
 args = vars(ap.parse_args())
@@ -66,43 +72,81 @@ while True:
     minBlendDistance = np.inf
     candidateCircle = []
     minCircle = []
+    closestCircle = []
     if (circles is not None) and (len(goodMatches) != 0):  # if there circle number and matched points number are not zero
         circle = np.round(circles[0, :]).astype("int")  # convert the (x, y) coordinates and radius of the circles to integers
-
+        print("old_pos is", len(old_pos))
+        if len(old_pos) > 0:
+            minDistance = np.inf
         for (xCircle, yCircle, rCircle) in circle:  # loop over the (x, y) coordinates and radius of the circles
             cv2.circle(frame, (xCircle, yCircle), rCircle, (0, 0, 0), 4)  # draw all the circles in black
             totalDistance = 0
             totalWithinCircle = 0
+            totalPoints = [(xCircle, yCircle)]
+            if len(old_pos) > 0:
+                distance = np.sqrt(np.power(xCircle - old_pos[0], 2) + np.power(yCircle - old_pos[1], 2))
+                if distance < minDistance:
+                    minDistance = distance
+                    closestCircle = [xCircle, yCircle, rCircle]
+                    print("Update closestCircle ", closestCircle)
+
             for (xMatch, yMatch) in matchedPointCoordinate:  # loop over all the matched points
                 currentDistance = np.sqrt(np.power(xCircle - xMatch, 2) + np.power(yCircle - yMatch, 2))
                 totalDistance = totalDistance + currentDistance
                 if (currentDistance < rCircle):  # count the number of matched points within the circle
                     totalWithinCircle += 1
-            if ((totalWithinCircle) >= WITHIN_CIRCLE_THRESHOLD * len(goodMatches)):
-                candidateCircle.append((xCircle, yCircle, rCircle, totalDistance))
-                cv2.circle(frame, (xCircle, yCircle), rCircle, (255, 255, 255), 4)  # draw all the circles in white
+                    totalPoints.append((xMatch, yMatch))
+            std = np.std(totalPoints)
+            if totalWithinCircle >= WITHIN_CIRCLE_THRESHOLD * len(goodMatches) and std <= stdTolerant:
+                candidateCircle.append((xCircle, yCircle, rCircle, totalDistance, std, totalWithinCircle))
+                cv2.circle(frame, (xCircle, yCircle), rCircle, (255, 255, 255), 4)  # draw all the candidate circles in white
     print([len(circle), len(candidateCircle)])  # print the number of circles and candidate circles
 
     # sort the candidate circles by the total distances from all matched keypoints to the centre of the circle
     # the order is ascending
     # find the smallest circle within the first 2 candidates
-    if (len(candidateCircle) != 0):
-        candidateCircle = sorted(candidateCircle, key=lambda x: x[3])
-        rMin = (candidateCircle[0])[2]
+    # if (len(candidateCircle) != 0):
+    #     candidateCircle = sorted(candidateCircle, key=lambda x: x[3])
+    #     rMin = (candidateCircle[0])[2]
+    #     for index in range(3):
+    #         candidateCircle.append([np.inf, np.inf, np.inf, np.inf])
+    #     for index in range(2):
+    #         if (candidateCircle[index])[2] <= rMin:
+    #             minCircle = ((candidateCircle[index])[0], (candidateCircle[index])[1], (candidateCircle[index])[2])
+    #             print("totalDistance", (candidateCircle[index])[3])
+    #             print("标准差 ", (candidateCircle[index])[4])
+
+    # sort the candidate circles by the total distances from all matched keypoints to the centre of the circle
+    # the order is ascending
+    # find the smallest circle within the first 2 candidates
+    if len(candidateCircle) != 0:
         for index in range(3):
-            candidateCircle.append([np.inf, np.inf, np.inf, np.inf])
-        for index in range(2):
-            if (candidateCircle[index])[2] <= rMin:
-                minCircle = ((candidateCircle[index])[0], (candidateCircle[index])[1], (candidateCircle[index])[2])
+            candidateCircle.append([np.inf, np.inf, np.inf, np.inf, np.inf, np.inf])
+        candidateCircleInDistance = sorted(candidateCircle, key=lambda x: x[3])
+        # candidateCircleInDistance = [candidateCircleInStd[0], candidateCircleInStd[1], candidateCircleInStd[2], candidateCircleInStd[3]]
+        # candidateCircleInDistance = sorted(candidateCircleInDistance, key=lambda x: x[3])
+
+        minCircle = ((candidateCircleInDistance[0])[0], (candidateCircleInDistance[0])[1], (candidateCircleInDistance[0])[2])
+        print("特征点数", (candidateCircleInDistance[0])[5])
+        print("标准差 ", (candidateCircleInDistance[0])[4])
+
 
     # draw the minimum circle in green if it exists
     if (len(minCircle) != 0):
         cv2.circle(frame, (minCircle[0], minCircle[1]), minCircle[2], (0, 255, 0), 4)
+        old_pos = [minCircle[0], minCircle[1]]
+        print("old_pos ", old_pos)
+    elif len(closestCircle) != 0:
+        print("Using old_pos ", old_pos)
+        print("closest circle", closestCircle)
+        cv2.circle(frame, (closestCircle[0], closestCircle[1]), closestCircle[2], (0, 255, 0), 4)
+        old_pos = [closestCircle[0], closestCircle[1]]
+
     cv2.drawKeypoints(frame, keypointFrameMatched, frame, color=(255, 0, 255))  # draw matched keypoints in red
     cv2.imshow("Frame", frame)
-
+    frame_num = frame_num + 1
     # 按任意键逐帧播放, 按‘q’退出程序
-    key = cv2.waitKey(0) & 0xFF
+    key = cv2.waitKey(1) & 0xFF
     if key == ord("q"):
         break
 
