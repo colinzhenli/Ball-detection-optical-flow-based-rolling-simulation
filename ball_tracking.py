@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 # the higher the threshold is, the more matched keypoints in frame, the range is (0,1)
 MATCH_THRESHOLD = 0.93
 # the lower the threshold is, there must be more keypoints within the circle, the range is (0,1)
-WITHIN_CIRCLE_THRESHOLD = 0.45
+WITHIN_CIRCLE_THRESHOLD = 0.36
 # The tolerant of the standard division, the bigger tolerant, the more candidate cycles
 stdTolerant = 90
 # The tolerant of the closest cycle's radius, used to define if the closest cycle is the ball,
