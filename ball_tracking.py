@@ -10,10 +10,15 @@ from matplotlib import pyplot as plt
 MATCH_THRESHOLD = 0.93
 # the lower the threshold is, there must be more keypoints within the circle, the range is (0,1)
 WITHIN_CIRCLE_THRESHOLD = 0.45
-# The tolerant of the standard division
-stdTolerant = 80
+# The tolerant of the standard division, the bigger tolerant, the more candidate cycles
+stdTolerant = 90
+# The tolerant of the closest cycle's radius, used to define if the closest cycle is the ball,
+#  or random cycle on the floor
+rTolerant = 4
 # Previous center position of the best matching cycle
 old_pos = []
+# Previous radius of the best matching cycle
+old_r = 0
 
 frame_num = 0
 ap = argparse.ArgumentParser()
@@ -29,6 +34,17 @@ else:
     camera = cv2.VideoCapture(args["video"])
 # fixed video path in my li's computer
 # camera = cv2.VideoCapture("/Users/lizhen/Desktop/CMPT_461（CV）/cmpt461/test.mp4")
+
+#定义编解码器并创建VideoWriter对象
+width = int(camera.get(cv2.CAP_PROP_FRAME_WIDTH))
+height = int(camera.get(cv2.CAP_PROP_FRAME_HEIGHT))
+# width = camera.get(4)
+# height = camera.get(3)
+size = (width, height)
+print("width,height", size)
+fourcc = cv2.VideoWriter_fourcc(*'XVID')
+# out = cv2.VideoWriter('your_video.avi', fourcc, 20.0, size)
+videoWriter = cv2.VideoWriter('out.avi', fourcc, 20.0, size)
 
 while True:
     # read in the images and frames and change the format
@@ -138,17 +154,27 @@ while True:
     if len(minCircle) != 0:
         cv2.circle(frame, (minCircle[0], minCircle[1]), minCircle[2], (0, 255, 0), 4)
         old_pos = [minCircle[0], minCircle[1]]
+        old_r = minCircle[2]
         print("old_pos ", old_pos)
     # Using the closest circle as the best match if not found
-    elif len(closestCircle) != 0:
+    elif len(closestCircle) != 0 and abs(old_r - closestCircle[2]) / closestCircle[2] <= rTolerant:
         print("Using old_pos ", old_pos)
         print("closest circle", closestCircle)
         cv2.circle(frame, (closestCircle[0], closestCircle[1]), closestCircle[2], (0, 255, 0), 4)
         old_pos = [closestCircle[0], closestCircle[1]]
+    else:
+        # clear the old position, there is no ball in the scene, will not use closest cycle in this scene
+        old_pos = []
 
     cv2.drawKeypoints(frame, keypointFrameMatched, frame, color=(255, 0, 255))  # draw matched keypoints in red
+    # frame = cv2.flip(frame, 0)  # 写翻转的框架
+    print("width", camera.get(3))  # 宽度
+    print("height", camera.get(4))  # 高度
+    videoWriter.write(frame)
     cv2.imshow("Frame", frame)
+
     frame_num = frame_num + 1
+
     # 连续播放， 按‘q’退出程序
     key = cv2.waitKey(1) & 0xFF
     # 按任意键逐帧播放, 按‘q’退出程序
@@ -157,4 +183,5 @@ while True:
         break
 
 camera.release()
+videoWriter.release()
 cv2.destroyAllWindows()
