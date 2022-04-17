@@ -6,15 +6,24 @@ import imutils
 import cv2
 from matplotlib import pyplot as plt
 
+
+# def add_alpha_channel(img):
+#     # jpg图像添加alpha通道
+#     b_channel, g_channel, r_channel = cv2.split(img)  # 剥离jpg图像通道
+#     alpha_channel = np.ones(b_channel.shape, dtype=b_channel.dtype) * 255  # 创建Alpha通道
+#     img_new = cv2.merge((b_channel, g_channel, r_channel, alpha_channel))  # 融合通道
+#     return img_new
+
+
 # the higher the threshold is, the more matched keypoints in frame, the range is (0,1)
 MATCH_THRESHOLD = 0.93
 # the lower the threshold is, there must be more keypoints within the circle, the range is (0,1)
-WITHIN_CIRCLE_THRESHOLD = 0.36
+WITHIN_CIRCLE_THRESHOLD = 0.43
 # The tolerant of the standard division, the bigger tolerant, the more candidate cycles
 stdTolerant = 90
 # The tolerant of the closest cycle's radius, used to define if the closest cycle is the ball,
 #  or random cycle on the floor
-rTolerant = 4
+rTolerant = 2
 # Previous center position of the best matching cycle
 old_pos = []
 # Previous radius of the best matching cycle
@@ -35,7 +44,7 @@ else:
 # fixed video path in my li's computer
 # camera = cv2.VideoCapture("/Users/lizhen/Desktop/CMPT_461（CV）/cmpt461/test.mp4")
 
-#定义编解码器并创建VideoWriter对象
+# 定义编解码器并创建VideoWriter对象
 width = int(camera.get(cv2.CAP_PROP_FRAME_WIDTH))
 height = int(camera.get(cv2.CAP_PROP_FRAME_HEIGHT))
 # width = camera.get(4)
@@ -89,8 +98,10 @@ while True:
     candidateCircle = []
     minCircle = []
     closestCircle = []
-    if (circles is not None) and (len(goodMatches) != 0):  # if there circle number and matched points number are not zero
-        circle = np.round(circles[0, :]).astype("int")  # convert the (x, y) coordinates and radius of the circles to integers
+    if (circles is not None) and (
+            len(goodMatches) != 0):  # if there circle number and matched points number are not zero
+        circle = np.round(circles[0, :]).astype(
+            "int")  # convert the (x, y) coordinates and radius of the circles to integers
         # Initialize the minimum distance
         if len(old_pos) > 0:
             minDistance = np.inf
@@ -139,6 +150,24 @@ while True:
     # the order is ascending
     # find the smallest circle within the first 2 candidates
 
+    if len(old_pos) > 0:
+        src1 = cv2.imread('C:\PyCharm_Code\cmpt461\mask.png', cv2.IMREAD_COLOR)
+        mask = cv2.resize(src1, (2 * old_r, 2 * old_r), interpolation=cv2.INTER_NEAREST)
+        xTopLeft = old_pos[0] - old_r
+        yTopLeft = old_pos[1] + old_r
+        xBottomRight = old_pos[0] + old_r
+        yBottomRight = old_pos[1] - old_r
+        # cv2.imwrite('C:\PyCharm_Code\cmpt461\currentFrame' + '.png', frame)
+        # src2 = cv2.imread('C:\PyCharm_Code\cmpt461\currentFrame.png', cv2.IMREAD_COLOR)
+        # frame = src2
+        # frame = merge_img(src2, mask, yTopLeft, yBottomRight, xTopLeft, xBottomRight)
+        # add_alpha_channel(frame)
+        if 0 < xTopLeft < frame.shape[1] and \
+                0 < xBottomRight < frame.shape[1] and \
+                0 < yTopLeft < frame.shape[0] and \
+                0 < yBottomRight < frame.shape[0]:
+            frame[yBottomRight:yTopLeft, xTopLeft:xBottomRight] = mask
+
     if len(candidateCircle) != 0:
         # Fill the array by infinity
         for index in range(3):
@@ -162,6 +191,7 @@ while True:
         print("closest circle", closestCircle)
         cv2.circle(frame, (closestCircle[0], closestCircle[1]), closestCircle[2], (0, 255, 0), 4)
         old_pos = [closestCircle[0], closestCircle[1]]
+        old_r = closestCircle[2]
     else:
         # clear the old position, there is no ball in the scene, will not use closest cycle in this scene
         old_pos = []
