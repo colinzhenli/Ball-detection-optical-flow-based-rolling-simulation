@@ -16,9 +16,9 @@ from matplotlib import pyplot as plt
 
 
 # the higher the threshold is, the more matched keypoints in frame, the range is (0,1)
-MATCH_THRESHOLD = 0.9
+MATCH_THRESHOLD = 0.93
 # the lower the threshold is, there must be more keypoints within the circle, the range is (0,1)
-WITHIN_CIRCLE_THRESHOLD = 0.4
+WITHIN_CIRCLE_THRESHOLD = 0.43
 # The tolerant of the standard division, the bigger tolerant, the more candidate cycles
 stdTolerant = 90
 # The tolerant of the closest cycle's radius, used to define if the closest cycle is the ball,
@@ -67,7 +67,7 @@ while True:
     grayFrame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     # detect circles in the image
-    circles = cv2.HoughCircles(grayFrame, cv2.HOUGH_GRADIENT, 1, 100, param1=100, param2=30, minRadius=5,
+    circles = cv2.HoughCircles(grayFrame, cv2.HOUGH_GRADIENT, 1.3, 100, param1=100, param2=30, minRadius=5,
                                maxRadius=300)
     # circlesSTD = cv2.HoughCircles(grayFrame, cv2.HOUGH_GRADIENT,1,100,param1=100,param2=30,minRadius=5,maxRadius=300)
     # creat SIFT and find the keypoints
@@ -150,23 +150,23 @@ while True:
     # the order is ascending
     # find the smallest circle within the first 2 candidates
 
-    if len(old_pos) > 0:
-        src1 = cv2.imread('C:\PyCharm_Code\cmpt461\mask.png', cv2.IMREAD_COLOR)
-        mask = cv2.resize(src1, (2 * old_r, 2 * old_r), interpolation=cv2.INTER_NEAREST)
-        xTopLeft = old_pos[0] - old_r
-        yTopLeft = old_pos[1] + old_r
-        xBottomRight = old_pos[0] + old_r
-        yBottomRight = old_pos[1] - old_r
-        # cv2.imwrite('C:\PyCharm_Code\cmpt461\currentFrame' + '.png', frame)
-        # src2 = cv2.imread('C:\PyCharm_Code\cmpt461\currentFrame.png', cv2.IMREAD_COLOR)
-        # frame = src2
-        # frame = merge_img(src2, mask, yTopLeft, yBottomRight, xTopLeft, xBottomRight)
-        # add_alpha_channel(frame)
-        if 0 < xTopLeft < frame.shape[1] and \
-                0 < xBottomRight < frame.shape[1] and \
-                0 < yTopLeft < frame.shape[0] and \
-                0 < yBottomRight < frame.shape[0]:
-            frame[yBottomRight:yTopLeft, xTopLeft:xBottomRight] = mask
+    # if len(old_pos) > 0:
+    #     src1 = cv2.imread('C:\PyCharm_Code\cmpt461\mask.png', cv2.IMREAD_COLOR)
+    #     mask = cv2.resize(src1, (2 * old_r, 2 * old_r), interpolation=cv2.INTER_NEAREST)
+    #     xTopLeft = old_pos[0] - old_r
+    #     yTopLeft = old_pos[1] + old_r
+    #     xBottomRight = old_pos[0] + old_r
+    #     yBottomRight = old_pos[1] - old_r
+    #     # cv2.imwrite('C:\PyCharm_Code\cmpt461\currentFrame' + '.png', frame)
+    #     # src2 = cv2.imread('C:\PyCharm_Code\cmpt461\currentFrame.png', cv2.IMREAD_COLOR)
+    #     # frame = src2
+    #     # frame = merge_img(src2, mask, yTopLeft, yBottomRight, xTopLeft, xBottomRight)
+    #     # add_alpha_channel(frame)
+    #     if 0 < xTopLeft < frame.shape[1] and \
+    #             0 < xBottomRight < frame.shape[1] and \
+    #             0 < yTopLeft < frame.shape[0] and \
+    #             0 < yBottomRight < frame.shape[0]:
+    #         frame[yBottomRight:yTopLeft, xTopLeft:xBottomRight] = mask
 
     if len(candidateCircle) != 0:
         # Fill the array by infinity
