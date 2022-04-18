@@ -16,9 +16,9 @@ from matplotlib import pyplot as plt
 
 
 # the higher the threshold is, the more matched keypoints in frame, the range is (0,1)
-MATCH_THRESHOLD = 0.93
+MATCH_THRESHOLD = 0.9
 # the lower the threshold is, there must be more keypoints within the circle, the range is (0,1)
-WITHIN_CIRCLE_THRESHOLD = 0.43
+WITHIN_CIRCLE_THRESHOLD = 0.4
 # The tolerant of the standard division, the bigger tolerant, the more candidate cycles
 stdTolerant = 90
 # The tolerant of the closest cycle's radius, used to define if the closest cycle is the ball,
@@ -61,13 +61,13 @@ while True:
     if args.get("video") and not grabbed:
         break
     frame = imutils.resize(frame, width=600)
-    imageBallName = 'test2.png'
+    imageBallName = 'ball1.png'
     imageBall = cv2.imread(imageBallName)
     grayImageBall = cv2.cvtColor(imageBall, cv2.COLOR_BGR2GRAY)
     grayFrame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     # detect circles in the image
-    circles = cv2.HoughCircles(grayFrame, cv2.HOUGH_GRADIENT, 1.7, 100, param1=100, param2=30, minRadius=5,
+    circles = cv2.HoughCircles(grayFrame, cv2.HOUGH_GRADIENT, 1, 100, param1=100, param2=30, minRadius=5,
                                maxRadius=300)
     # circlesSTD = cv2.HoughCircles(grayFrame, cv2.HOUGH_GRADIENT,1,100,param1=100,param2=30,minRadius=5,maxRadius=300)
     # creat SIFT and find the keypoints
@@ -126,7 +126,7 @@ while True:
                     totalPoints.append((xMatch, yMatch))
             # Compute the standard division
             std = np.std(totalPoints)
-            if totalWithinCircle >= WITHIN_CIRCLE_THRESHOLD * len(goodMatches) and std <= stdTolerant:
+            if totalWithinCircle >= WITHIN_CIRCLE_THRESHOLD * len(goodMatches) and std <= stdTolerant and totalWithinCircle >= 4:
                 candidateCircle.append((xCircle, yCircle, rCircle, totalDistance, std, totalWithinCircle))
                 # draw all the candidate circles in white
                 cv2.circle(frame, (xCircle, yCircle), rCircle, (255, 255, 255), 4)
