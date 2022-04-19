@@ -6,7 +6,6 @@ import imutils
 import cv2
 from matplotlib import pyplot as plt
 
-
 # def add_alpha_channel(img):
 #     # jpg图像添加alpha通道
 #     b_channel, g_channel, r_channel = cv2.split(img)  # 剥离jpg图像通道
@@ -44,30 +43,31 @@ else:
 # fixed video path in my li's computer
 # camera = cv2.VideoCapture("/Users/lizhen/Desktop/CMPT_461（CV）/cmpt461/test.mp4")
 
-# 定义编解码器并创建VideoWriter对象
-width = int(camera.get(cv2.CAP_PROP_FRAME_WIDTH))
-height = int(camera.get(cv2.CAP_PROP_FRAME_HEIGHT))
-# width = camera.get(4)
-# height = camera.get(3)
-size = (width, height)
-print("width,height", size)
-fourcc = cv2.VideoWriter_fourcc(*'XVID')
-# out = cv2.VideoWriter('your_video.avi', fourcc, 20.0, size)
-videoWriter = cv2.VideoWriter('out.avi', fourcc, 20.0, size)
-
+# Set the bool condition to initialize the video writer in the first frame
+initialized = False
 while True:
     # read in the images and frames and change the format
     (grabbed, frame) = camera.read()
     if args.get("video") and not grabbed:
         break
     frame = imutils.resize(frame, width=600)
-    imageBallName = 'test2.png'
+    # 定义编解码器并创建VideoWriter对象
+    if not initialized:
+        width = frame.shape[1]
+        height = frame.shape[0]
+        size = (width, height)
+        print("width,height", size)
+        fourcc = cv2.VideoWriter_fourcc('X', 'V', 'I', 'D')
+        videoWriter = cv2.VideoWriter('out.avi', fourcc, 20.0, size)
+    initialized = True
+    # frame = cv2.resize(frame, (int(height*2), int(width*2)))
+    imageBallName = 'ball1.png'
     imageBall = cv2.imread(imageBallName)
     grayImageBall = cv2.cvtColor(imageBall, cv2.COLOR_BGR2GRAY)
     grayFrame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     # detect circles in the image
-    circles = cv2.HoughCircles(grayFrame, cv2.HOUGH_GRADIENT, 1.7, 100, param1=100, param2=30, minRadius=5,
+    circles = cv2.HoughCircles(grayFrame, cv2.HOUGH_GRADIENT, 1.3, 100, param1=100, param2=30, minRadius=5,
                                maxRadius=300)
     # circlesSTD = cv2.HoughCircles(grayFrame, cv2.HOUGH_GRADIENT,1,100,param1=100,param2=30,minRadius=5,maxRadius=300)
     # creat SIFT and find the keypoints
@@ -106,7 +106,7 @@ while True:
         if len(old_pos) > 0:
             minDistance = np.inf
         for (xCircle, yCircle, rCircle) in circle:  # loop over the (x, y) coordinates and radius of the circles
-            cv2.circle(frame, (xCircle, yCircle), rCircle, (0, 0, 0), 4)  # draw all the circles in black
+            # cv2.circle(frame, (xCircle, yCircle), rCircle, (0, 0, 0), 4)  # draw all the circles in black
             totalDistance = 0
             totalWithinCircle = 0
             totalPoints = [(xCircle, yCircle)]
@@ -126,10 +126,11 @@ while True:
                     totalPoints.append((xMatch, yMatch))
             # Compute the standard division
             std = np.std(totalPoints)
-            if totalWithinCircle >= WITHIN_CIRCLE_THRESHOLD * len(goodMatches) and std <= stdTolerant:
+            if totalWithinCircle >= WITHIN_CIRCLE_THRESHOLD * len(
+                    goodMatches) and std <= stdTolerant and totalWithinCircle >= 4:
                 candidateCircle.append((xCircle, yCircle, rCircle, totalDistance, std, totalWithinCircle))
                 # draw all the candidate circles in white
-                cv2.circle(frame, (xCircle, yCircle), rCircle, (255, 255, 255), 4)
+                # cv2.circle(frame, (xCircle, yCircle), rCircle, (255, 255, 255), 4)
     print([len(circle), len(candidateCircle)])  # print the number of circles and candidate circles
 
     # sort the candidate circles by the total distances from all matched keypoints to the centre of the circle
@@ -150,23 +151,23 @@ while True:
     # the order is ascending
     # find the smallest circle within the first 2 candidates
 
-    if len(old_pos) > 0:
-        src1 = cv2.imread('C:\PyCharm_Code\cmpt461\mask.png', cv2.IMREAD_COLOR)
-        mask = cv2.resize(src1, (2 * old_r, 2 * old_r), interpolation=cv2.INTER_NEAREST)
-        xTopLeft = old_pos[0] - old_r
-        yTopLeft = old_pos[1] + old_r
-        xBottomRight = old_pos[0] + old_r
-        yBottomRight = old_pos[1] - old_r
-        # cv2.imwrite('C:\PyCharm_Code\cmpt461\currentFrame' + '.png', frame)
-        # src2 = cv2.imread('C:\PyCharm_Code\cmpt461\currentFrame.png', cv2.IMREAD_COLOR)
-        # frame = src2
-        # frame = merge_img(src2, mask, yTopLeft, yBottomRight, xTopLeft, xBottomRight)
-        # add_alpha_channel(frame)
-        if 0 < xTopLeft < frame.shape[1] and \
-                0 < xBottomRight < frame.shape[1] and \
-                0 < yTopLeft < frame.shape[0] and \
-                0 < yBottomRight < frame.shape[0]:
-            frame[yBottomRight:yTopLeft, xTopLeft:xBottomRight] = mask
+    # if len(old_pos) > 0:
+    #     src1 = cv2.imread('C:\PyCharm_Code\cmpt461\mask.png', cv2.IMREAD_COLOR)
+    #     mask = cv2.resize(src1, (2 * old_r, 2 * old_r), interpolation=cv2.INTER_NEAREST)
+    #     xTopLeft = old_pos[0] - old_r
+    #     yTopLeft = old_pos[1] + old_r
+    #     xBottomRight = old_pos[0] + old_r
+    #     yBottomRight = old_pos[1] - old_r
+    #     # cv2.imwrite('C:\PyCharm_Code\cmpt461\currentFrame' + '.png', frame)
+    #     # src2 = cv2.imread('C:\PyCharm_Code\cmpt461\currentFrame.png', cv2.IMREAD_COLOR)
+    #     # frame = src2
+    #     # frame = merge_img(src2, mask, yTopLeft, yBottomRight, xTopLeft, xBottomRight)
+    #     # add_alpha_channel(frame)
+    #     if 0 < xTopLeft < frame.shape[1] and \
+    #             0 < xBottomRight < frame.shape[1] and \
+    #             0 < yTopLeft < frame.shape[0] and \
+    #             0 < yBottomRight < frame.shape[0]:
+    #         frame[yBottomRight:yTopLeft, xTopLeft:xBottomRight] = mask
 
     if len(candidateCircle) != 0:
         # Fill the array by infinity
@@ -175,7 +176,8 @@ while True:
         # Sort the candidate circles by total distance
         candidateCircleInDistance = sorted(candidateCircle, key=lambda x: x[3])
         # Using the smallest circle that has standard division > stdTolerant
-        minCircle = ((candidateCircleInDistance[0])[0], (candidateCircleInDistance[0])[1], (candidateCircleInDistance[0])[2])
+        minCircle = (
+            (candidateCircleInDistance[0])[0], (candidateCircleInDistance[0])[1], (candidateCircleInDistance[0])[2])
         print("特征点数", (candidateCircleInDistance[0])[5])
         print("标准差 ", (candidateCircleInDistance[0])[4])
 
