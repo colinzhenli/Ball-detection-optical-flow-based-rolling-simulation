@@ -106,7 +106,7 @@ while True:
         if len(old_pos) > 0:
             minDistance = np.inf
         for (xCircle, yCircle, rCircle) in circle:  # loop over the (x, y) coordinates and radius of the circles
-            # cv2.circle(frame, (xCircle, yCircle), rCircle, (0, 0, 0), 4)  # draw all the circles in black
+            cv2.circle(frame, (xCircle, yCircle), rCircle, (0, 0, 0), 4)  # draw all the circles in black
             totalDistance = 0
             totalWithinCircle = 0
             totalPoints = [(xCircle, yCircle)]
@@ -130,7 +130,7 @@ while True:
                     goodMatches) and std <= stdTolerant and totalWithinCircle >= 4:
                 candidateCircle.append((xCircle, yCircle, rCircle, totalDistance, std, totalWithinCircle))
                 # draw all the candidate circles in white
-                # cv2.circle(frame, (xCircle, yCircle), rCircle, (255, 255, 255), 4)
+                cv2.circle(frame, (xCircle, yCircle), rCircle, (255, 255, 255), 4)
     print([len(circle), len(candidateCircle)])  # print the number of circles and candidate circles
 
     # sort the candidate circles by the total distances from all matched keypoints to the centre of the circle
