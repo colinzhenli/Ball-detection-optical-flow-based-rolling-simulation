@@ -1,4 +1,4 @@
-# cmpt461 Project
+# Cmpt 461 Project
 # By Zhen Li & Yang Zou
 
 # Ball tracking 
