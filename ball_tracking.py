@@ -1,3 +1,5 @@
+# Stage 1: Ball tracking
+
 from collections import deque
 from turtle import distance
 import numpy as np
@@ -5,14 +7,6 @@ import argparse
 import imutils
 import cv2
 from matplotlib import pyplot as plt
-
-# def add_alpha_channel(img):
-#     # jpg图像添加alpha通道
-#     b_channel, g_channel, r_channel = cv2.split(img)  # 剥离jpg图像通道
-#     alpha_channel = np.ones(b_channel.shape, dtype=b_channel.dtype) * 255  # 创建Alpha通道
-#     img_new = cv2.merge((b_channel, g_channel, r_channel, alpha_channel))  # 融合通道
-#     return img_new
-
 
 # the higher the threshold is, the more matched keypoints in frame, the range is (0,1)
 MATCH_THRESHOLD = 0.93
@@ -133,42 +127,6 @@ while True:
                 cv2.circle(frame, (xCircle, yCircle), rCircle, (255, 255, 255), 4)
     print([len(circle), len(candidateCircle)])  # print the number of circles and candidate circles
 
-    # sort the candidate circles by the total distances from all matched keypoints to the centre of the circle
-    # the order is ascending
-    # find the smallest circle within the first 2 candidates
-    # if (len(candidateCircle) != 0):
-    #     candidateCircle = sorted(candidateCircle, key=lambda x: x[3])
-    #     rMin = (candidateCircle[0])[2]
-    #     for index in range(3):
-    #         candidateCircle.append([np.inf, np.inf, np.inf, np.inf])
-    #     for index in range(2):
-    #         if (candidateCircle[index])[2] <= rMin:
-    #             minCircle = ((candidateCircle[index])[0], (candidateCircle[index])[1], (candidateCircle[index])[2])
-    #             print("totalDistance", (candidateCircle[index])[3])
-    #             print("标准差 ", (candidateCircle[index])[4])
-
-    # sort the candidate circles by the total distances from all matched keypoints to the centre of the circle
-    # the order is ascending
-    # find the smallest circle within the first 2 candidates
-
-    # if len(old_pos) > 0:
-    #     src1 = cv2.imread('C:\PyCharm_Code\cmpt461\mask.png', cv2.IMREAD_COLOR)
-    #     mask = cv2.resize(src1, (2 * old_r, 2 * old_r), interpolation=cv2.INTER_NEAREST)
-    #     xTopLeft = old_pos[0] - old_r
-    #     yTopLeft = old_pos[1] + old_r
-    #     xBottomRight = old_pos[0] + old_r
-    #     yBottomRight = old_pos[1] - old_r
-    #     # cv2.imwrite('C:\PyCharm_Code\cmpt461\currentFrame' + '.png', frame)
-    #     # src2 = cv2.imread('C:\PyCharm_Code\cmpt461\currentFrame.png', cv2.IMREAD_COLOR)
-    #     # frame = src2
-    #     # frame = merge_img(src2, mask, yTopLeft, yBottomRight, xTopLeft, xBottomRight)
-    #     # add_alpha_channel(frame)
-    #     if 0 < xTopLeft < frame.shape[1] and \
-    #             0 < xBottomRight < frame.shape[1] and \
-    #             0 < yTopLeft < frame.shape[0] and \
-    #             0 < yBottomRight < frame.shape[0]:
-    #         frame[yBottomRight:yTopLeft, xTopLeft:xBottomRight] = mask
-
     if len(candidateCircle) != 0:
         # Fill the array by infinity
         for index in range(3):
@@ -199,9 +157,6 @@ while True:
         old_pos = []
 
     cv2.drawKeypoints(frame, keypointFrameMatched, frame, color=(255, 0, 255))  # draw matched keypoints in red
-    # frame = cv2.flip(frame, 0)  # 写翻转的框架
-    print("width", camera.get(3))  # 宽度
-    print("height", camera.get(4))  # 高度
     videoWriter.write(frame)
     cv2.imshow("Frame", frame)
 
