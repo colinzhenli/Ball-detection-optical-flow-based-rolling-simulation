@@ -1,4 +1,4 @@
-# Stage 1: Ball tracking
+# Stage 1: Ball  tracking
 
 # from collections import deque
 # from turtle import distance
